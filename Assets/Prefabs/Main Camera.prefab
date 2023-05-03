@@ -98,7 +98,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   player: {fileID: 0}
-  scrollSpeed: 0.2
+  scrollSpeed: 0.05
 --- !u!1 &5500905679999096115
 GameObject:
   m_ObjectHideFlags: 0
