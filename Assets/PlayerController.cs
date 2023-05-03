@@ -1,6 +1,3 @@
-using System;
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using Random = UnityEngine.Random;
 
@@ -10,7 +7,7 @@ public class PlayerController : MonoBehaviour
     public float minAngle = 51.0f;
     public float maxAngle = 311.0f;
     public float thrust = 100.0f;
-    private bool _fired = false;
+    private bool _fired;
 
     public new GameObject camera;
     
@@ -86,10 +83,6 @@ public class PlayerController : MonoBehaviour
             {
                 cannonBarrel.transform.Rotate(totalRotation);
             }
-
-            var simTrans = cannonBarrel.transform;
-            var simForce = projectile.transform.up * thrust;
-            //TrajectoryManager.Instance.SimulateLaunch(simTrans, simForce);
         }
 
         if (Input.GetKey(KeyCode.W))

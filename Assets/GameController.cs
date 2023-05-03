@@ -1,19 +1,16 @@
-using System.Collections;
-using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.Serialization;
 using UnityEngine.UI;
 
 public class GameController : MonoBehaviour
 {
-    // Planets and gravity
-    GameObject[] _planets;
 
     // Player, origin and destination objects
     public GameObject player;
     public GameObject projectile;
-    public GameObject _destination;
+    [FormerlySerializedAs("_destination")] public GameObject destination;
 
     // UI bits
     public GameObject winUI;
@@ -37,27 +34,45 @@ public class GameController : MonoBehaviour
     public GameObject ratingStar2;
     public GameObject ratingStar3;
 
-    private float _timer = 0.0f;
-    private bool _timerStart = false;
+    private float _timer;
+    private bool _timerStart;
 
     private AudioSource[] _objectAudio;
     private Rigidbody2D _projectileRb;
     private PolygonCollider2D _destinationCollider;
+    private TextMeshProUGUI _timeText;
+    private TextMeshProUGUI _yourTimeText;
+    private Canvas _winUI;
+    private Image _ratingStar3;
+    private TextMeshProUGUI _parTime3Text;
+    private TextMeshProUGUI _parTime2Text;
+    private Image _ratingStar2;
+    private TextMeshProUGUI _parTime1Text;
+    private Image _ratingStar1;
+    private static readonly int MainTex = Shader.PropertyToID("_MainTex");
 
 
     void Start()
     {
-        _destinationCollider = _destination.GetComponent<PolygonCollider2D>();
+        _ratingStar1 = ratingStar1.GetComponent<Image>();
+        _parTime1Text = parTime1Text.GetComponent<TextMeshProUGUI>();
+        _ratingStar2 = ratingStar2.GetComponent<Image>();
+        _parTime2Text = parTime2Text.GetComponent<TextMeshProUGUI>();
+        _parTime3Text = parTime3Text.GetComponent<TextMeshProUGUI>();
+        _ratingStar3 = ratingStar3.GetComponent<Image>();
+        _winUI = winUI.GetComponent<Canvas>();
+        _yourTimeText = yourTimeText.GetComponent<TextMeshProUGUI>();
+        _timeText = timeText.GetComponent<TextMeshProUGUI>();
+        _destinationCollider = destination.GetComponent<PolygonCollider2D>();
         _projectileRb = projectile.GetComponent<Rigidbody2D>();
 
         winUI.GetComponent<Canvas>().enabled = false;
-        winText.GetComponent<TextMeshProUGUI>().text = winnerText[Random.Range(0, winnerText.Length)].ToString();
+        winText.GetComponent<TextMeshProUGUI>().text = winnerText[Random.Range(0, winnerText.Length)];
         parTime1Text.GetComponent<TextMeshProUGUI>().text = "< " + parTime1.ToString("F2") + "s";
         parTime2Text.GetComponent<TextMeshProUGUI>().text = "< " + parTime2.ToString("F2") + "s";
         parTime3Text.GetComponent<TextMeshProUGUI>().text = "< " + parTime3.ToString("F2") + "s";
 
-        _destination = GameObject.FindGameObjectWithTag("Destination");
-        _planets = GameObject.FindGameObjectsWithTag("Planet");
+        destination = GameObject.FindGameObjectWithTag("Destination");
 
         _objectAudio = GetComponents<AudioSource>();
 
@@ -67,7 +82,7 @@ public class GameController : MonoBehaviour
         {
              if (background.GetComponent<Renderer>())
              {
-                 background.GetComponent<Renderer>().sharedMaterial.SetTextureOffset("_MainTex", new Vector2(0, 0));
+                 background.GetComponent<Renderer>().sharedMaterial.SetTextureOffset(MainTex, new Vector2(0, 0));
              }
         }
     }
@@ -79,7 +94,7 @@ public class GameController : MonoBehaviour
         {
             _timer += Time.deltaTime;
             var timerString = _timer.ToString("F2") + "s";
-            timeText.GetComponent<TextMeshProUGUI>().text = timerString;
+            _timeText.text = timerString;
         }
 
         if (_projectileRb.IsTouching(_destinationCollider) && (_projectileRb.IsSleeping() || _projectileRb.inertia < 0.075f) && _timerStart)
@@ -113,48 +128,47 @@ public class GameController : MonoBehaviour
         StopTimer();
         _timer = 0.0f;
         var timerString = _timer.ToString("F2") + "s";
-        timeText.GetComponent<TextMeshProUGUI>().text = timerString;
+        _timeText.text = timerString;
     }
     
     public void Win()
     {
         _timerStart = false;
-        yourTimeText.GetComponent<TextMeshProUGUI>().text = _timer.ToString("F2") + "s";
+        _yourTimeText.text = _timer.ToString("F2") + "s";
 
         if (_timer < parTime1)
         {
-            ratingStar1.GetComponent<Image>().sprite = star;
-            parTime1Text.GetComponent<TextMeshProUGUI>().color = new Color(255, 255, 255);
+            _ratingStar1.sprite = star;
+            _parTime1Text.color = new Color(255, 255, 255);
         }
         if (_timer < parTime2)
         {
-            ratingStar2.GetComponent<Image>().sprite = star;
-            parTime2Text.GetComponent<TextMeshProUGUI>().color = new Color(255, 255, 255);
+            _ratingStar2.sprite = star;
+            _parTime2Text.color = new Color(255, 255, 255);
         }
         if (_timer < parTime3)
         {
-            ratingStar3.GetComponent<Image>().sprite = star;
-            parTime3Text.GetComponent<TextMeshProUGUI>().color = new Color(255, 255, 255);
+            _ratingStar3.sprite = star;
+            _parTime3Text.color = new Color(255, 255, 255);
         }
         
-        winUI.GetComponent<Canvas>().enabled = true;
+        _winUI.enabled = true;
         _objectAudio[0].Play();
     }
 
     public void ResetLevel()
     {
-        winUI.GetComponent<Canvas>().enabled = false;
+        _winUI.enabled = false;
 
         ResetTimer();
-        ratingStar1.GetComponent<Image>().sprite = starEmpty;
-        ratingStar2.GetComponent<Image>().sprite = starEmpty;
-        ratingStar3.GetComponent<Image>().sprite = starEmpty;
+        _ratingStar1.sprite = starEmpty;
+        _ratingStar2.sprite = starEmpty;
+        _ratingStar3.sprite = starEmpty;
 
         Color dimmed = new Color(190, 190, 190);
-
-        parTime1Text.GetComponent<TextMeshProUGUI>().color = dimmed;
-        parTime2Text.GetComponent<TextMeshProUGUI>().color = dimmed;
-        parTime3Text.GetComponent<TextMeshProUGUI>().color = dimmed;
+        _parTime1Text.color = dimmed;
+        _parTime2Text.color = dimmed;
+        _parTime3Text.color = dimmed;
     }
 
     public void NextLevel()

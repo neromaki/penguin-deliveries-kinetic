@@ -1,58 +1,58 @@
 using System.Collections;
 using System.Collections.Generic;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class CameraController : MonoBehaviour
 {
     public GameObject target;  
-    private Vector3 offset;
-    private float initialSize;
-    private Vector3 initialPosition;
+    private Vector3 _offset;
+    private float _initialSize;
+    private Vector3 _initialPosition;
 
     public float cameraMoveSpeed = 8.0f;
     public float cameraZoomSpeed = 1.25f;
 
-    private List<Coroutine> coroutines;
+    private List<Coroutine> _coroutines;
+    private Camera _camera;
 
     void Start()
     {
-        initialSize = GetComponent<Camera>().orthographicSize;
-        initialPosition = transform.position;
+        _camera = GetComponent<Camera>();
+        _initialSize = GetComponent<Camera>().orthographicSize;
+        _initialPosition = transform.position;
         
         if (target != null)
         {
-            offset = transform.position - target.transform.position;
+            _offset = transform.position - target.transform.position;
         }
 
-        coroutines = new List<Coroutine>();
+        _coroutines = new List<Coroutine>();
     }
 
 
     void LateUpdate()
     {
         if (target == null) return;
-        transform.position = new Vector3(target.transform.position.x + offset.x, target.transform.position.y + offset.y, -10);
-        //transform.position = Vector3.Lerp(transform.position, targetPosition, 5.0f * Time.deltaTime);
-        
+        var position = target.transform.position;
+        transform.position = new Vector3(position.x + _offset.x, position.y + _offset.y, -10);
     }
 
     public void SetTarget(GameObject targetEntity)
     {
-        foreach (Coroutine cr in coroutines)
+        foreach (Coroutine cr in _coroutines)
         {
             StopCoroutine(cr);
         }
         
         if (targetEntity == null)
         {
-            coroutines.Add(StartCoroutine(LerpPosition(null, initialPosition, 0.35f)));
+            _coroutines.Add(StartCoroutine(LerpPosition(null, _initialPosition, 0.35f)));
             target = null;
         }
         else
         {
-            coroutines.Add(StartCoroutine(CamFollow(targetEntity, cameraMoveSpeed)));
-            coroutines.Add(StartCoroutine(SetCameraTargetSnap(targetEntity)));
+            _coroutines.Add(StartCoroutine(CamFollow(targetEntity, cameraMoveSpeed)));
+            _coroutines.Add(StartCoroutine(SetCameraTargetSnap(targetEntity)));
 
         }
         //target = targetEntity;
@@ -66,70 +66,69 @@ public class CameraController : MonoBehaviour
     
     IEnumerator CamFollow(GameObject targetEntity, float speed)
     {
-        float time = 0;
-        //Vector3 startPosition = transform.position;
-        
         while (true)
         {
-            Vector3 lerped = Vector3.Lerp(transform.position, targetEntity.transform.position, speed * Time.deltaTime);
-            transform.position = new Vector3(lerped.x, lerped.y, -10);
+            var lerp = Vector3.Lerp(transform.position, targetEntity.transform.position, speed * Time.deltaTime);
+            transform.position = new Vector3(lerp.x, lerp.y, -10);
             yield return null;
         }
     }
-    
-    IEnumerator LerpPosition(GameObject targetEntity, Vector3 targetPosition, float duration)
+
+    private IEnumerator LerpPosition(GameObject targetEntity, Vector3 targetPosition, float duration)
     {
         float time = 0;
-        Vector3 startPosition = transform.position;
-        Vector3 target;
+        var startPosition = transform.position;
+        Vector3 lerpTarget;
+        
         if (targetEntity != null)
         {
-            target = new Vector3(targetEntity.transform.position.x, targetEntity.transform.position.y, -10);
+            var position = targetEntity.transform.position;
+            lerpTarget = new Vector3(position.x, position.y, -10);
         }
         else
         {
-            target = new Vector3(targetPosition.x, targetPosition.y, -10);
+            lerpTarget = new Vector3(targetPosition.x, targetPosition.y, -10);
         }
         
         while (time < duration)
         {
-            transform.position = Vector3.Lerp(startPosition, target, time / duration);
+            transform.position = Vector3.Lerp(startPosition, lerpTarget, time / duration);
             time += Time.deltaTime;
             yield return null;
         }
         transform.position = targetPosition;
     }
 
+    // ReSharper disable Unity.PerformanceAnalysis
     public void SetSize(float size)
     {
         if (size <= 0.0f)
         {
-            //GetComponent<Camera>().orthographicSize = initialSize;
-            coroutines.Add(StartCoroutine(SetCameraSize(initialSize)));
+            _coroutines.Add(StartCoroutine(SetCameraSize(_initialSize)));
             return;
         }
 
-        coroutines.Add(StartCoroutine(SetCameraSize(size)));
+        _coroutines.Add(StartCoroutine(SetCameraSize(size)));
     }
 
     private IEnumerator SetCameraSize(float targetSize)
     {
         float time = 0;
-        float startValue = GetComponent<Camera>().orthographicSize;
-        float duration = cameraZoomSpeed;
+        var startValue = _camera.orthographicSize;
+        var duration = cameraZoomSpeed;
         
         while (time < duration)
         {
-            GetComponent<Camera>().orthographicSize = Mathf.Lerp(startValue, targetSize, time / duration);
+            _camera.orthographicSize = Mathf.Lerp(startValue, targetSize, time / duration);
             time += Time.deltaTime;
             yield return null;
         }
-        GetComponent<Camera>().orthographicSize = targetSize;
+        _camera.orthographicSize = targetSize;
     }
 
     public void ResetCamera()
     {
-        transform.position = initialPosition;
+        transform.position = _initialPosition;
         SetSize(0.0f);
     }
 }
